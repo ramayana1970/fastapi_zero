@@ -41,6 +41,7 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 lint = 'ruff check'
 format = 'ruff format'
+reordena_import = 'ruff check --fix'
 run = 'fastapi dev fastapi_zero/app.py --port 8090'
 test = 'pytest -s -x --cov=fastapi_zero -vv'
 post_test = 'coverage html'
