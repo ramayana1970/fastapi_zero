@@ -18,8 +18,6 @@ def test_create_user(session, mock_db_time_created):
             select(User).where(User.username == 'alice')
         )
 
-        breakpoint()
-
     assert asdict(user_alice) == {
         'id': 1,
         'username': 'alice',
@@ -32,7 +30,6 @@ def test_create_user(session, mock_db_time_created):
 
 def test_update_user(session, mock_db_time_created):
     with mock_db_time_created(model=User) as time:
-
         new_user = User(
             username='alice', email='alice@dunossauro.com', password='secret'
         )
@@ -46,8 +43,6 @@ def test_update_user(session, mock_db_time_created):
 
         user_alice.email = 'alice@teste'
         session.commit()
-
-        breakpoint()
 
     assert asdict(user_alice) == {
         'id': 1,
