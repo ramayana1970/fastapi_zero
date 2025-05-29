@@ -42,7 +42,7 @@ def session():
 
 
 @contextmanager
-def _mock_db_time_created(*, model, time=datetime.now()):
+def _mock_db_time(*, model, time=datetime.now()):
     def fake_time_hook(mapper, connection, target):
         if hasattr(target, 'created_at'):
             target.created_at = time
@@ -55,8 +55,8 @@ def _mock_db_time_created(*, model, time=datetime.now()):
 
 
 @pytest.fixture
-def mock_db_time_created():
-    return _mock_db_time_created
+def mock_db_time():
+    return _mock_db_time
 
 
 @pytest.fixture

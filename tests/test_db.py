@@ -5,8 +5,8 @@ from sqlalchemy import select
 from fastapi_zero.models import User
 
 
-def test_create_user(session, mock_db_time_created):
-    with mock_db_time_created(model=User) as time:
+def test_create_user(session, mock_db_time):
+    with mock_db_time(model=User) as time:
         new_user = User(
             username='alice', email='alice@dunossauro.com', password='secret'
         )
@@ -28,8 +28,8 @@ def test_create_user(session, mock_db_time_created):
     }
 
 
-def test_update_user(session, mock_db_time_created):
-    with mock_db_time_created(model=User) as time:
+def test_update_user(session, mock_db_time):
+    with mock_db_time(model=User) as time:
         new_user = User(
             username='alice', email='alice@dunossauro.com', password='secret'
         )

@@ -73,8 +73,8 @@ def test_get_user(client, user):
     }
 
 
-def test_get_user_with_404(client):
-    response = client.get('/users/0')
+def test_get_user_with_404(client, user):
+    response = client.get('/users/11')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found!!'}
@@ -98,9 +98,9 @@ def test_update_user(client, user):
     }
 
 
-def test_update_user_with_404(client):
+def test_update_user_with_404(client, user):
     response = client.put(
-        '/users/0',
+        '/users/22',
         json={
             'email': 'bob@example.com',
             'username': 'bob',
@@ -119,11 +119,39 @@ def test_delete_user(client, user):
     assert response.json() == {'message': 'User deleted successfully!!'}
 
 
-def test_delete_user_with_404(client):
-    response = client.delete('/users/1')
+def test_delete_user_with_404(client, user):
+    response = client.delete('/users/33')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found!!'}
+
+
+def test_create_integrity_username_error(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': 'bob@example.com',
+            'password': 'secret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists!!'}
+
+
+def test_create_integrity_email_error(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'bob',
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email already exists!!'}
 
 
 def test_update_integrity_error(client, user):
