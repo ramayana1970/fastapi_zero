@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi_zero.schemas import UserPublic, UserSchema
+from fastapi_zero.security import create_access_token
 
 
 def test_root_deve_retornar_ola_mundo(client):
@@ -51,10 +52,14 @@ def test_create_user(client):
 
 def test_read_users(
     client,
+    token,
     user: UserSchema,
 ):
     user_schema = UserPublic.model_validate(user).model_dump()
-    response = client.get('/users/')
+    response = client.get(
+        '/users/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
@@ -80,9 +85,10 @@ def test_get_user_with_404(client, user):
     assert response.json() == {'detail': 'User not found!!'}
 
 
-def test_update_user(client, user):
+def test_update_user(client, token, user):
     response = client.put(
         '/users/1',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'email': 'bob@example.com',
             'username': 'bob',
@@ -98,32 +104,14 @@ def test_update_user(client, user):
     }
 
 
-def test_update_user_with_404(client, user):
-    response = client.put(
-        '/users/22',
-        json={
-            'email': 'bob@example.com',
-            'username': 'bob',
-            'password': 'secret',
-        },
+def test_delete_user(client, token, user):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
     )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found!!'}
-
-
-def test_delete_user(client, user):
-    response = client.delete('/users/1')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted successfully!!'}
-
-
-def test_delete_user_with_404(client, user):
-    response = client.delete('/users/33')
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found!!'}
 
 
 def test_create_integrity_username_error(client, user):
@@ -154,7 +142,7 @@ def test_create_integrity_email_error(client, user):
     assert response.json() == {'detail': 'Email already exists!!'}
 
 
-def test_update_integrity_error(client, user):
+def test_update_integrity_error(client, token, user):
     response = client.post(
         '/users/',
         json={
@@ -166,6 +154,7 @@ def test_update_integrity_error(client, user):
 
     response = client.put(
         '/users/1',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'alice@exemplo.com',
@@ -175,3 +164,50 @@ def test_update_integrity_error(client, user):
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Username or email already exists!!'}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert token['token_type'] == 'Bearer'
+    assert 'access_token' in token
+
+
+def test_jwt_invalid_token(client):
+    response = client.delete(
+        '/users/1',
+        headers={'Authorization': 'Bearer invalid_token'},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validate credentials'}
+
+
+def test_get_current_user_not_found(client):
+    data = {'no-email': 'test'}
+    token = create_access_token(data)
+
+    response = client.delete(
+        '/users/1',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validate credentials'}
+
+
+def test_get_current_user_does_not_exists__exercicio(client):
+    data = {'sub': 'test@test'}
+    token = create_access_token(data)
+
+    response = client.delete(
+        '/users/1',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validate credentials'}
